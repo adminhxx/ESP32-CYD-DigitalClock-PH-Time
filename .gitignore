@@ -6,3 +6,4 @@
 creds.h
 
 .fake
+.vscode/extensions.json
