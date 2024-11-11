@@ -368,14 +368,26 @@ void DrawDate(time_t utc)
 
 void SetupWiFiBySD()
 {
+    tft.fillScreen(clockBackgroundColor);
+    tft.setTextFont(4);
+    tft.setTextSize(1);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString("Reading wifi.json", 320 / 2, 240 / 2 - 40);
+    delay(1000);
     DynamicJsonDocument wifiConfig = cyd_filesystem_readJson(SD, cyd_paths_config);
     if (wifiConfig.isNull() || !wifiConfig.containsKey("ssid") || !wifiConfig.containsKey("pwd"))
     {
         tft.fillScreen(clockBackgroundColor);
-        tft.setTextFont(4);
-        tft.setTextSize(1);
-        tft.setTextDatum(MC_DATUM);
-        tft.drawString("Please check SD", 320 / 2, 240 / 2 - 40);
+        tft.drawString("Check wifi.json", 320 / 2, 240 / 2 - 40);
+        int tries = 10;
+        String dots = "";
+        while (WiFi.status() != WL_CONNECTED && tries-- > 0)
+        {
+          delay(500);
+          Serial.print(".");
+          dots = dots + ".";
+          tft.drawString(dots, 320 / 2, 240 / 2 + 20);
+        }
     }else{
         String ssid = wifiConfig["ssid"];
         String pass = wifiConfig["pwd"];
@@ -384,10 +396,7 @@ void SetupWiFiBySD()
         Serial.print("pass: ");
         Serial.println(pass);
 
-        tft.fillScreen(clockBackgroundColor);
-        tft.setTextFont(4);
-        tft.setTextSize(1);
-        tft.setTextDatum(MC_DATUM);
+        tft.fillScreen(clockBackgroundColor);  
         tft.drawString("Connecting to", 320 / 2, 240 / 2 - 40);
         tft.drawString(ssid, 320 / 2, 240 / 2);
 
