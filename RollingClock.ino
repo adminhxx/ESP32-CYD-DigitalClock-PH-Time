@@ -368,7 +368,7 @@ void DrawDate(time_t utc)
 
 void SetupWiFiBySD()
 {
-    DynamicJsonDocument wifiConfig = xtouch_filesystem_readJson(SD, cyd_paths_config);
+    DynamicJsonDocument wifiConfig = cyd_filesystem_readJson(SD, cyd_paths_config);
     if (wifiConfig.isNull() || !wifiConfig.containsKey("ssid") || !wifiConfig.containsKey("pwd"))
     {
         tft.fillScreen(clockBackgroundColor);
@@ -467,7 +467,7 @@ void setup()
   Serial.begin(115200);
   SetupCYD();
   //SetupWiFi();
-  while (!xtouch_sdcard_setup())
+  while (!cyd_sdcard_setup())
     ;
   SetupWiFiBySD();
   SetupNTP();

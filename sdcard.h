@@ -6,7 +6,7 @@
 #include <ArduinoJson.h>
 #include <Arduino.h>
 
-bool xtouch_sdcard_setup()
+bool cyd_sdcard_setup()
 {
     if (!SD.begin())
     {
@@ -43,7 +43,7 @@ bool xtouch_sdcard_setup()
 
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
     Serial.printf("[CYD][SD] SD Card Size: %lluMB\n", cardSize);
-    xtouch_filesystem_mkdir(SD, cyd_paths_root);
+    cyd_filesystem_mkdir(SD, cyd_paths_root);
 
     return true;
 }

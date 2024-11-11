@@ -7,36 +7,36 @@
 #include <ArduinoJson.h>
 #include <Arduino.h>
 
-bool xtouch_filesystem_exist(fs::FS &fs, const char *path)
+bool cyd_filesystem_exist(fs::FS &fs, const char *path)
 {
     return fs.exists(path);
 }
 
-File xtouch_filesystem_open(fs::FS &fs, const char *path)
+File cyd_filesystem_open(fs::FS &fs, const char *path)
 {
     return fs.open(path);
 }
 
-bool xtouch_filesystem_deleteFile(fs::FS &fs, const char *path)
+bool cyd_filesystem_deleteFile(fs::FS &fs, const char *path)
 {
     return fs.remove(path);
 }
 
-bool xtouch_filesystem_mkdir(fs::FS &fs, const char *path)
+bool cyd_filesystem_mkdir(fs::FS &fs, const char *path)
 {
-    if (!xtouch_filesystem_exist(SD, path))
+    if (!cyd_filesystem_exist(SD, path))
     {
         return fs.mkdir(path);
     }
     return true;
 }
 
-bool xtouch_filesystem_rmdir(fs::FS &fs, const char *path)
+bool cyd_filesystem_rmdir(fs::FS &fs, const char *path)
 {
     return fs.rmdir(path);
 }
 
-void xtouch_filesystem_writeJson(fs::FS &fs, const char *filename, DynamicJsonDocument json, bool defaultsToArray = false, int size = 1024)
+void cyd_filesystem_writeJson(fs::FS &fs, const char *filename, DynamicJsonDocument json, bool defaultsToArray = false, int size = 1024)
 {
     Serial.print(F("[CYD][SD] Writting JSON file: "));
     Serial.println(filename);
@@ -52,7 +52,7 @@ void xtouch_filesystem_writeJson(fs::FS &fs, const char *filename, DynamicJsonDo
     configFile.close();
 }
 
-DynamicJsonDocument xtouch_filesystem_readJson(fs::FS &fs, const char *filename, bool defaultsToArray = false, int size = 1024)
+DynamicJsonDocument cyd_filesystem_readJson(fs::FS &fs, const char *filename, bool defaultsToArray = false, int size = 1024)
 {
     Serial.print(F("[CYD][SD] Reading JSON file: "));
     Serial.println(filename);
