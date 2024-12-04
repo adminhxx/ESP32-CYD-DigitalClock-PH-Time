@@ -10,6 +10,8 @@ You will have to modify the PREFERENCES section in RollingClock.ino to your WiFi
 #include <WiFi.h>    // To connect to WiFi
 #include <WiFiUdp.h> // To communicate with NTP server
 #include <Timezone.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 
 #define TOUCH_CS 33 // This sketch does not use touch, but this is defined to quiet the warning about not defining touch_cs.
 
@@ -25,7 +27,7 @@ void Debug(String label, int val)
 // NTP Servers:
 //static const char ntpServerName[] = "us.pool.ntp.org";
 //static const char ntpServerName[] = "ph.pool.ntp.org"; // Philippines pool NTP server
-static const char ntpServerName[] = "asia.pool.ntp.org"; // Asia pool NTP server
+static const char ntpServerName[] = "ntp.aliyun.com"; // Asia pool NTP server
 // static const char ntpServerName[] = "time.nist.gov";
 // static const char ntpServerName[] = "time-a.timefreq.bldrdoc.gov";
 // static const char ntpServerName[] = "time-b.timefreq.bldrdoc.gov";
@@ -75,6 +77,8 @@ int clockDatum = TL_DATUM;
 uint16_t clockBackgroundColor = TFT_BLACK;
 uint16_t clockFontColor = TFT_WHITE;
 int prevDay = 0;
+int follower = 0;
+unsigned long lastTime = 0;
 
 void SetupCYD()
 {
@@ -354,16 +358,24 @@ void DrawDate(time_t utc)
 
     tft.setTextSize(4);
     int h = tft.fontHeight();
-    tft.fillRect(0, 210 - h, 320, h, TFT_BLACK);
+    tft.fillRect(0, 190 - h, 320, h, TFT_BLACK);
 
-    tft.drawString(buffer, 320 / 2, 210);
+    tft.drawString(buffer, 320 / 2, 190);
 
     int dow = weekday(local);
     String dayNames[] = {"", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     tft.setTextSize(4);
-    tft.fillRect(0, 170 - h, 320, h, TFT_BLACK);
-    tft.drawString(dayNames[dow], 320 / 2, 170);
+    tft.fillRect(0, 150 - h, 320, h, TFT_BLACK);
+    tft.drawString(dayNames[dow], 320 / 2, 150);
   }
+}
+
+void DrawFans(){
+  tft.setTextDatum(BC_DATUM);
+  tft.setTextSize(2);
+  int h = tft.fontHeight();
+  tft.fillRect(0, 225 - h, 320, h, TFT_BLACK);
+  tft.drawString("follower: "+String(follower), 320 / 2, 225);
 }
 
 void SetupWiFiBySD()
@@ -374,7 +386,7 @@ void SetupWiFiBySD()
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Reading wifi.json", 320 / 2, 240 / 2 - 40);
     delay(1000);
-    DynamicJsonDocument wifiConfig = cyd_filesystem_readJson(SD, cyd_paths_config);
+    DynamicJsonDocument wifiConfig = cyd_filesystem_readJson(SD, cyd_paths_wifi_config);
     if (wifiConfig.isNull() || !wifiConfig.containsKey("ssid") || !wifiConfig.containsKey("pwd"))
     {
         tft.fillScreen(clockBackgroundColor);
@@ -470,6 +482,32 @@ void SetupNTP()
   }
 }
 
+void getFans() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String url = "https://api.bilibili.com/x/relation/stat?vmid=" + String(4772302);
+    http.begin(url);
+    int httpCode = http.GET();
+    if (httpCode > 0) {
+      String payload = http.getString();
+      Serial.println(payload);
+      DynamicJsonDocument doc(1024);
+      deserializeJson(doc, payload);
+      int followerCount = doc["data"]["follower"];
+      Serial.print("Follower count: ");
+      Serial.println(followerCount);
+      if(follower!=followerCount){
+        follower = followerCount;
+        DrawFans();
+      }
+    } else {
+      Serial.print("HTTP request failed with code ");
+      Serial.println(httpCode);
+    }
+    http.end();
+  }
+}
+
 /*-------- SETUP & LOOP ----------*/
 void setup()
 {
@@ -481,6 +519,7 @@ void setup()
   SetupWiFiBySD();
   SetupNTP();
   SetupDigits();
+  getFans();
 }
 
 time_t prevDisplay = 0; // when the Digital clock was displayed
@@ -496,6 +535,11 @@ void loop()
     DrawDate(prevDisplay); // Draw Date and day of the week.
     DrawColons();
     DrawAmPm();
+  }
+  unsigned long t = millis();
+  if ((t - lastTime) > 60000) {
+    getFans();
+    lastTime = millis();
   }
   delay(100);
 }
